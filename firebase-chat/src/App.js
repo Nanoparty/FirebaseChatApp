@@ -1,129 +1,108 @@
-import React, { useRef, useState } from 'react';
-import './App.css';
+import React, { useRef, useState, useEffect } from 'react';
+//import './login.css';
 
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import 'firebase/auth';
-import 'firebase/analytics';
+import LoginScreen from './components/LoginScreen';
+import firestore from './components/FirebaseConfig';
 
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
-
-firebase.initializeApp({
-  apiKey: "AIzaSyCbbi5P7tMPEietH4mnqAFBhJcpNXLztI8",
-  authDomain: "fir-chat-d4253.firebaseapp.com",
-  projectId: "fir-chat-d4253",
-  storageBucket: "fir-chat-d4253.appspot.com",
-  messagingSenderId: "947900115155",
-  appId: "1:947900115155:web:e38164753f17020d168c26",
-  measurementId: "G-0L2MCV1F85"
-})
-
-const auth = firebase.auth();
-const firestore = firebase.firestore();
-const analytics = firebase.analytics();
-
+//import { useAuthState } from 'react-firebase-hooks/auth';
+//import { useCollectionData } from 'react-firebase-hooks/firestore';
 
 function App() {
+  
+  const [users,setUsers]=useState([])
 
-  const [user] = useAuthState(auth);
+  const fetchUsers=async()=>{
+    const response=firestore.collection('users');
+    const data=await response.get();
+    setUsers(data);
+
+    // data.docs.forEach(item=>{
+    //   console.log("ITEM:",item.data());
+    //   console.log("OldUsers", users);
+    //   const newUsers = users.concat(item.data());
+    //   console.log("NewUsers",newUsers);
+    //   setUsers(newUsers);
+    // })
+
+    //console.log(users)
+  }
+
+  const loggedIn = () =>{
+    
+  }
+
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, [])
+
+  const printUsers = () =>{
+    console.log(users);
+  }
+
 
   return (
-    <div className="App">
-      <header>
-        <h1>⚛️🔥💬</h1>
-        <SignOut />
-      </header>
 
-      <section>
-        {user ? <ChatRoom /> : <SignIn />}
-      </section>
+    // <div>
+    //   <button onClick={printUsers}>Pull Data</button>
+    //   {
+        
+    //   }
+    //   {
+    //     users && users.map(user=>{
 
-    </div>
+    //       return(
+    //         <div className="blog-container" key={user.data().firstname}>
+    //           <h4>{user.data().username}</h4>
+    //           <p>{user.data().password}</p>
+    //         </div>
+    //       )
+    //     })
+    //   }
+    // </div>
+
+     <>
+       {<LoginScreen firestore={firestore} />}
+     </>
+      // <>
+      //   {<GetData />}
+      // </>
   );
 }
 
-function SignIn() {
-
-  const signInWithGoogle = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider);
-  }
-
+function GetData(){
   return (
-    <>
-      <button className="sign-in" onClick={signInWithGoogle}>Sign in with Google</button>
-      <p>Do not violate the community guidelines or you will be banned for life!</p>
-    </>
-  )
-
-}
-
-function SignOut() {
-  return auth.currentUser && (
-    <button className="sign-out" onClick={() => auth.signOut()}>Sign Out</button>
-  )
-}
-
-
-function ChatRoom() {
-  const dummy = useRef();
-  const messagesRef = firestore.collection('messages');
-  const query = messagesRef.orderBy('createdAt').limit(25);
-
-  const [messages] = useCollectionData(query, { idField: 'id' });
-
-  const [formValue, setFormValue] = useState('');
-
-
-  const sendMessage = async (e) => {
-    e.preventDefault();
-
-    const { uid, photoURL } = auth.currentUser;
-
-    await messagesRef.add({
-      text: formValue,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid,
-      photoURL
-    })
-
-    setFormValue('');
-    dummy.current.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  return (<>
-    <main>
-
-      {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
-
-      <span ref={dummy}></span>
-
-    </main>
-
-    <form onSubmit={sendMessage}>
-
-      <input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="say something nice" />
-
-      <button type="submit" disabled={!formValue}>🕊️</button>
-
-    </form>
-  </>)
-}
-
-
-function ChatMessage(props) {
-  const { text, uid, photoURL } = props.message;
-
-  const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
-
-  return (<>
-    <div className={`message ${messageClass}`}>
-      <img src={photoURL || 'https://api.adorable.io/avatars/23/abott@adorable.png'} />
-      <p>{text}</p>
+    <div>
+      <button>pull data</button>
     </div>
-  </>)
+  )
 }
 
+function GetFirebaseData() {
+  const [users,setUsers]=useState([])
+  const fetchBlogs=async()=>{
+    const response=firestore.collection('users');
+    const data=await response.get();
+    data.docs.forEach(item=>{
+     setUsers([...users,item.data()])
+    })
+  }
+  useEffect(() => {
+    fetchBlogs();
+  }, [])
+  return (
+    <div >
+      {
+        users && users.map(user=>{
+          return(
+            <div className="blog-container">
+              <h4>{user.username}</h4>
+              <p>{user.password}</p>
+            </div>
+          )
+        })
+      }
+    </div>
+  );
+}
 
 export default App;
